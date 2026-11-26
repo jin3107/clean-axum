@@ -1,13 +1,12 @@
 [package]
-name = "clean-axum"
+name = "{{project-name}}"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 # docs
-authors = ["Weiliang Li <to.be.impressive@gmail.com>"]
-description = "Axum scaffold with clean architecture"
-license = "MIT"
+authors = ["{{authors}}"]
+description = "{{project-name}} REST API"
 readme = "README.md"
 
 [workspace]

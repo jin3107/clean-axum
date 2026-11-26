@@ -1,0 +1,14 @@
+[template]
+cargo_generate_version = ">=0.23.0"
+# files that belong to the template repository, not to generated projects
+ignore = [".github", "TEMPLATE.md"]
+
+[placeholders.database]
+type = "string"
+prompt = "Database"
+choices = ["sqlite", "postgres", "mysql"]
+default = "sqlite"
+
+# the Citus scripts only make sense for PostgreSQL
+[conditional.'database != "postgres"']
+ignore = ["deploy"]

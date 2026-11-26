@@ -32,15 +32,15 @@ for node in coord:9700 worker1:9701 worker2:9702; do
     pg_ctlcluster "$pg" "$name" restart
 
     psql_node=(psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -p "$port" -U postgres)
-    if [ "$("${psql_node[@]}" -tAc "SELECT 1 FROM pg_database WHERE datname='clean_axum'")" != 1 ]; then
-        "${psql_node[@]}" -c "CREATE DATABASE clean_axum"
+    if [ "$("${psql_node[@]}" -tAc "SELECT 1 FROM pg_database WHERE datname='{{crate_name}}'")" != 1 ]; then
+        "${psql_node[@]}" -c "CREATE DATABASE {{crate_name}}"
     fi
-    "${psql_node[@]}" -d clean_axum -c "CREATE EXTENSION IF NOT EXISTS citus"
+    "${psql_node[@]}" -d {{crate_name}} -c "CREATE EXTENSION IF NOT EXISTS citus"
 done
 
-coord=(psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -p 9700 -U postgres -d clean_axum)
+coord=(psql -v ON_ERROR_STOP=1 -h 127.0.0.1 -p 9700 -U postgres -d {{crate_name}})
 "${coord[@]}" -c "SELECT citus_set_coordinator_host('127.0.0.1', 9700)"
 "${coord[@]}" -c "SELECT citus_add_node('127.0.0.1', 9701)"
 "${coord[@]}" -c "SELECT citus_add_node('127.0.0.1', 9702)"
 "${coord[@]}" -c "SELECT * FROM citus_get_active_worker_nodes()"
-echo "Ready: postgres://postgres@127.0.0.1:9700/clean_axum"
+echo "Ready: postgres://postgres@127.0.0.1:9700/{{crate_name}}"

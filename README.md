@@ -1,129 +1,78 @@
-# clean-axum
+# {{project-name}}
 
-Axum scaffold with clean architecture.
+REST API built with Axum, SeaORM and utoipa, organised as a clean architecture
+workspace, with JWT authentication, roles and tenant isolation.
 
-You probably don't need [Rust on Rails](https://github.com/loco-rs/loco).
-
-Refer to [this post](https://kigawas.me/posts/rustacean-clean-architecture-approach/) for rationale and background.
-
-## Features
-
-- [Axum](https://github.com/tokio-rs/axum) framework
-- [SeaORM](https://github.com/SeaQL/sea-orm) domain models
-- Completely separated API routers and DB-related logic (named "persistence" layer)
-- Completely separated input parameters, queries and output schemas
-- OpenAPI documentation ([Swagger UI](https://clean-axum.shuttleapp.rs/docs) and [Scalar](https://clean-axum.shuttleapp.rs/scalar)) powered by [Utoipa](https://github.com/juhaku/utoipa)
-- Error handling with [Anyhow](https://github.com/dtolnay/anyhow)
-- Custom parameter validation with [validator](https://github.com/Keats/validator)
-- Optional [Shuttle](https://www.shuttle.rs/) runtime
-- Optional [prefork](https://docs.rs/prefork/latest/prefork/) workers for maximizing performance on Linux
-
-## Module hierarchy
-
-### API logic
-
-- `api::routers`: Axum endpoints
-- `api::error`: Models and traits for error handling
-- `api::extractor` Custom Axum extractors
-  - `api::extractor::json`: `Json` for bodies and responses
-  - `api::extractor::valid`: `Valid` for JSON body validation
-- `api::validation`: JSON validation model based on `validator`
-- `api::models`: Non domain model API models
-  - `api::models::response`: JSON error response
-
-### OpenAPI documentation
-
-- `doc`: Utoipa doc declaration
-
-### API-agonistic application logic
-
-Main concept: Web framework is replaceable.
-
-All modules here should not include any specific API web framework logic.
-
-- `app::persistence`: DB manipulation (CRUD) functions
-- `app::config`: DB or API server configuration
-- `app::state`: APP state, e.g. DB connection
-- `app::error`: APP errors used by `api::error`. e.g. "User not found"
-
-### DB/API-agnostic domain models
-
-Main concept: Database (Sqlite/MySQL/PostgreSQL) is replaceable.
-
-Except `models::domains` and `migration`, all modules are ORM library agnostic.
-
-- `models::domains`: SeaORM domain models
-- `models::params`: Serde input parameters for creating/updating domain models in DB
-- `models::schemas`: Serde output schemas for combining different domain models
-- `models::queries`: Serde queries for filtering domain models
-- `migration`: SeaORM migration files
-
-### Unit and integration tests
-
-- `tests::api`: API integration tests. Hierarchy is the same as `api::routers`
-- `tests::app::persistence`: DB/ORM-related unit tests. Hierarchy is the same as `app::persistence`
-
-### Others
-
-- `utils`: Utility functions
-- `main`: Tokio and Shuttle conditional entry point
+Database chosen at generation time: **{{database}}**.
 
 ## Run
 
-### Start server
+Create `.env` with a random `JWT_SECRET`:
+
+```powershell
+./scripts/new-env.ps1
+```
+
+On Linux or macOS use `sh scripts/new-env.sh`.
+{%- if database != "sqlite" %}
+
+Create the database `{{crate_name}}` and set the real user and password in
+`DATABASE_URL` inside `.env`.
+{%- endif %}
 
 ```bash
-cp .env.example .env
-# touch dev.db
-# cargo install sea-orm-cli
-# sea-orm-cli migrate up
 cargo run
-
-# or for production
-cargo run --release
 ```
 
-### Call API
+Migrations run at startup. API docs: <http://localhost:3000/docs/> (Swagger UI)
+and <http://localhost:3000/scalar>.
+
+## First calls
+
+`POST /auth/register` creates a tenant and its admin and returns a token. In
+Swagger UI, press **Authorize** and paste `access_token`.
+
+## Test
 
 ```bash
-curl -X POST http://localhost:3000/users -H "Content-Type: application/json" -d '{"username":"aaa"}'
-curl -X POST http://localhost:3000/users -H "Content-Type: application/json" -d '{"username":"abc"}'
-curl http://localhost:3000/users\?username\=a
+cargo test --workspace
 ```
 
-### OpenAPI doc (Swagger UI/Scalar)
+Tests use in-memory SQLite. To run them against another server:
+`TEST_DATABASE_URL=<url> cargo test --workspace -- --test-threads=1`.
+Use a database made for tests, because rows are left behind.
+{%- if database == "postgres" %}
 
-```bash
-open http://localhost:3000/docs
-open http://localhost:3000/scalar
-```
+## Citus (optional, local development only)
 
-## Start Shuttle local server
+1. `sudo bash deploy/citus/setup-wsl.sh` installs a coordinator and two workers.
+   It trusts every connection from 127.0.0.1.
+2. Set `DATABASE_URL="postgres://postgres@127.0.0.1:9700/{{crate_name}}"` and
+   start the app once so that migrations run.
+3. Run `deploy/citus/distribute.sql` on the coordinator, before adding data.
 
-```bash
-# cargo install cargo-shuttle
-cargo shuttle run
-```
+Every new tenant table needs `tenant_id` in its primary key and unique indexes,
+plus a line in `distribute.sql`.
+{%- endif %}
 
-Make sure docker engine is running, otherwise:
+## Layout
 
-```bash
-brew install colima docker
-colima start
-sudo ln -sf $HOME/.colima/default/docker.sock /var/run/docker.sock
-```
+| Crate | Content |
+|---|---|
+| `api` | routers, extractors, error mapping |
+| `app` | use cases, persistence, auth, config |
+| `models` | entities, parameters, queries, schemas |
+| `migration` | SeaORM migrations |
+| `doc` | OpenAPI document |
+| `utils` | database and test helpers |
 
-## Shuttle deployment
+## Not included
 
-```bash
-cargo shuttle login
-cargo shuttle deploy
-```
+Refresh tokens, token revocation, rate limiting and CORS. Tenant registration is
+open to anyone. Add these before exposing the API to real users.
 
-## Benchmark
+## Credits
 
-```bash
-# edit .env to use Postgres
-cargo run --release
-wrk --latency -t20 -c50 -d10s http://localhost:3000/users\?username\=
-```
+Generated from [jin3107/clean-axum](https://github.com/jin3107/clean-axum), a fork
+of [kigawas/clean-axum](https://github.com/kigawas/clean-axum) (MIT). Keep
+`third-party/clean-axum-LICENSE`.
