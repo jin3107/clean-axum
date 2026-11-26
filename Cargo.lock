@@ -121,6 +121,7 @@ dependencies = [
  "sea-orm",
  "serde",
  "serde_json",
+ "sqlx",
  "tower",
  "tower-cookies",
  "tower-http",
