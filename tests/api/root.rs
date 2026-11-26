@@ -1,10 +1,13 @@
-use axum::{http::StatusCode, Router};
+use axum::http::StatusCode;
 use http_body_util::BodyExt;
 
 use utils::testing::make_get_request;
 
-pub(super) async fn test_root(app: Router) {
-    let response = make_get_request(app, "/").await;
+use super::app;
+
+#[tokio::test]
+async fn root_is_public() {
+    let response = make_get_request(app("root").await, "/").await;
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.into_body().collect().await.unwrap().to_bytes();

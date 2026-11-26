@@ -6,7 +6,7 @@ publish = false
 
 [dependencies]
 axum = { workspace = true }
-utoipa = { workspace = true, features = ["axum_extras"] }
+utoipa = { workspace = true, features = ["axum_extras", "uuid"] }
 utoipa-swagger-ui = { version = "9.0.2", features = [
     "axum",
     "vendored",

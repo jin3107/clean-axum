@@ -13,18 +13,20 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(Blog::Table)
                     .if_not_exists()
-                    .col(pk_auto(Blog::Id))
-                    .col(integer(Blog::AuthorId).not_null())
+                    .col(uuid(Blog::TenantId))
+                    .col(uuid(Blog::Id))
+                    .col(uuid(Blog::AuthorId))
+                    .col(string(Blog::Title))
+                    .col(string(Blog::Content))
+                    .primary_key(Index::create().col(Blog::TenantId).col(Blog::Id))
+                    // composite key: an author must belong to the same tenant
                     .foreign_key(
                         ForeignKey::create()
-                            .name("fk_blog_author_id")
-                            .from(Blog::Table, Blog::AuthorId)
-                            .to(User::Table, User::Id)
-                            .on_update(ForeignKeyAction::NoAction)
+                            .name("fk_blog_author")
+                            .from(Blog::Table, (Blog::TenantId, Blog::AuthorId))
+                            .to(User::Table, (User::TenantId, User::Id))
                             .on_delete(ForeignKeyAction::Cascade),
                     )
-                    .col(ColumnDef::new(Blog::Title).string().not_null())
-                    .col(ColumnDef::new(Blog::Content).string().not_null())
                     .to_owned(),
             )
             .await
@@ -40,6 +42,7 @@ impl MigrationTrait for Migration {
 #[derive(DeriveIden)]
 enum Blog {
     Table,
+    TenantId,
     Id,
     AuthorId,
     Title,

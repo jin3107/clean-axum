@@ -1,26 +1,38 @@
-use utils::testing::setup_test_db;
+use sea_orm::DbErr;
+use utils::testing::{setup_test_db, test_db_url};
 
-mod blog;
-mod user;
-
-use blog::test_blog;
-use user::test_user;
-
-#[tokio::test]
-async fn user_main() {
-    let db = setup_test_db("sqlite::memory:")
-        .await
-        .expect("Set up db failed!");
-
-    test_user(&db).await;
-}
+use app::persistence::blog::create_blog;
+use app::persistence::tenant::create_tenant_with_admin;
+use app::persistence::user::get_user;
+use app::tenant::TenantId;
+use models::params::blog::CreateBlogParams;
 
 #[tokio::test]
-async fn blog_main() {
-    let db = setup_test_db("sqlite::memory:")
+async fn database_enforces_tenant_boundaries() {
+    let db = setup_test_db(&test_db_url("sqlite::memory:"))
         .await
         .expect("Set up db failed!");
+    let register =
+        |name: String| create_tenant_with_admin(&db, name, "admin".to_string(), "hash".to_string());
+    let a = register(format!("a-{}", uuid::Uuid::new_v4()))
+        .await
+        .expect("Create tenant a failed!");
+    let b = register(format!("b-{}", uuid::Uuid::new_v4()))
+        .await
+        .expect("Create tenant b failed!");
 
-    test_user(&db).await;
-    test_blog(&db).await;
+    let other = get_user(&db, TenantId(b.tenant_id), a.id).await.unwrap();
+    assert!(other.is_none());
+
+    let params = || CreateBlogParams {
+        title: "title".to_string(),
+        content: "test".to_string(),
+    };
+    create_blog(&db, TenantId(a.tenant_id), a.id, params())
+        .await
+        .expect("Create blog failed!");
+
+    // the composite foreign key rejects an author from another tenant
+    let crossed: Result<_, DbErr> = create_blog(&db, TenantId(b.tenant_id), a.id, params()).await;
+    assert!(crossed.is_err());
 }

@@ -5,40 +5,53 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use sea_orm::TryIntoModel;
+use uuid::Uuid;
 
+use app::auth::hash_password;
 use app::error::UserError;
 use app::persistence::user::{create_user, get_user, search_users};
 use app::state::AppState;
+use models::domains::role::Role;
 use models::params::user::CreateUserParams;
 use models::queries::user::UserQuery;
 use models::schemas::user::{UserListSchema, UserSchema};
 
 use crate::error::ApiError;
-use crate::extractor::{Json, Valid};
+use crate::extractor::{AuthUser, Json, Valid};
 use crate::models::{ApiErrorResponse, ParamsErrorResponse};
 
 #[utoipa::path(
     post,
     path = "",
     request_body = CreateUserParams,
+    security(("bearer" = [])),
     responses(
         (status = 201, description = "User created", body = UserSchema),
         (status = 400, description = "Bad request", body = ApiErrorResponse),
+        (status = 401, description = "Missing or invalid token", body = ApiErrorResponse),
+        (status = 403, description = "Admin role required", body = ApiErrorResponse),
         (status = 409, description = "Username already exists", body = ApiErrorResponse),
         (status = 422, description = "Validation error", body = ParamsErrorResponse),
         (status = 500, description = "Internal server error", body = ApiErrorResponse),
     )
 )]
 async fn users_post(
-    state: State<AppState>,
+    State(state): State<AppState>,
+    auth: AuthUser,
     Valid(Json(params)): Valid<Json<CreateUserParams>>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let user = create_user(&state.conn, params)
-        .await
-        .map_err(ApiError::from)?;
+    auth.require(Role::Admin)?;
 
-    let user = user.try_into_model().unwrap();
+    let hash = hash_password(params.password).await?;
+    let user = create_user(
+        &state.conn,
+        auth.tenant_id,
+        params.username,
+        hash,
+        params.role,
+    )
+    .await?;
+
     Ok((StatusCode::CREATED, Json(UserSchema::from(user))))
 }
 
@@ -48,20 +61,19 @@ async fn users_post(
     params(
         UserQuery
     ),
+    security(("bearer" = [])),
     responses(
-        (status = 200, description = "List users", body = UserListSchema),
+        (status = 200, description = "List users of the caller's tenant", body = UserListSchema),
+        (status = 401, description = "Missing or invalid token", body = ApiErrorResponse),
         (status = 500, description = "Internal server error", body = ApiErrorResponse),
     )
 )]
 async fn users_get(
-    state: State<AppState>,
-    query: Query<UserQuery>,
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Query(query): Query<UserQuery>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let Query(query) = query;
-
-    let users = search_users(&state.conn, query)
-        .await
-        .map_err(ApiError::from)?;
+    let users = search_users(&state.conn, auth.tenant_id, query).await?;
     Ok(Json(UserListSchema::from(users)))
 }
 
@@ -69,19 +81,22 @@ async fn users_get(
     get,
     path = "/{id}",
     params(
-        ("id" = i32, Path, description = "User id")
+        ("id" = Uuid, Path, description = "User id")
     ),
+    security(("bearer" = [])),
     responses(
         (status = 200, description = "Get user", body = UserSchema),
+        (status = 401, description = "Missing or invalid token", body = ApiErrorResponse),
         (status = 404, description = "Not found", body = ApiErrorResponse),
         (status = 500, description = "Internal server error", body = ApiErrorResponse),
     )
 )]
 async fn users_id_get(
-    state: State<AppState>,
-    Path(id): Path<i32>,
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let user = get_user(&state.conn, id).await.map_err(ApiError::from)?;
+    let user = get_user(&state.conn, auth.tenant_id, id).await?;
 
     user.map(|user| Json(UserSchema::from(user)))
         .ok_or_else(|| UserError::NotFound.into())

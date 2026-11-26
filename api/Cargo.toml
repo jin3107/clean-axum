@@ -25,5 +25,7 @@ utoipa = { workspace = true }
 # local dependencies
 app = { path = "../app" }
 models = { path = "../models" }
+uuid = "1"
+serde_json = "1"
 
 [dev-dependencies]

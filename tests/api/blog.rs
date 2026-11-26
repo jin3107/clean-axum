@@ -1,30 +1,23 @@
-use axum::{http::StatusCode, Router};
-use http_body_util::BodyExt;
-use serde_json::Value;
+use serde_json::json;
 
-use utils::testing::{make_get_request, make_post_request};
+use super::{app, call, register, token, unique};
 
-pub(super) async fn test_post_blogs(app: Router) {
-    let response = make_post_request(
-        app,
-        "/blogs",
-        r#"{"author_id": 1, "title": "title", "content": "test"}"#.to_owned(),
-    )
-    .await;
+#[tokio::test]
+async fn author_comes_from_the_token() {
+    let app = app("blog").await;
+    let admin = register(&app, &unique("clinic")).await;
 
-    assert_eq!(response.status(), StatusCode::CREATED);
-}
+    // a client-supplied author or tenant is ignored
+    let body = json!({
+        "title": "title", "content": "test",
+        "author_id": uuid::Uuid::new_v4(), "tenant_id": uuid::Uuid::new_v4()
+    });
+    let (status, created) = call(&app, "POST", "/blogs", Some(token(&admin)), Some(body)).await;
+    assert_eq!(status, 201, "{created}");
+    assert_eq!(created["author_id"], admin["user"]["id"]);
+    assert_eq!(created["tenant_id"], admin["user"]["tenant_id"]);
 
-pub(super) async fn test_get_blogs(app: Router) {
-    let response = make_get_request(app, "/blogs").await;
-    assert_eq!(response.status(), StatusCode::OK);
-
-    let body = response.into_body().collect().await.unwrap().to_bytes();
-    let result: Value = serde_json::from_slice(&body).unwrap();
-    assert_eq!(result["blogs"].as_array().unwrap().len(), 1);
-
-    let blog = &result["blogs"][0];
-    assert_eq!(blog["author_id"], 1);
-    assert_eq!(blog["title"], "title");
-    assert_eq!(blog["content"], "test");
+    let (status, list) = call(&app, "GET", "/blogs?title=tit", Some(token(&admin)), None).await;
+    assert_eq!(status, 200);
+    assert_eq!(list["blogs"], json!([created]));
 }

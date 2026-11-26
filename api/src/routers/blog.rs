@@ -5,7 +5,6 @@ use axum::{
     routing::get,
     Router,
 };
-use sea_orm::TryIntoModel;
 
 use app::persistence::blog::{create_blog, search_blogs};
 use app::state::AppState;
@@ -14,29 +13,29 @@ use models::queries::blog::BlogQuery;
 use models::schemas::blog::{BlogListSchema, BlogSchema};
 
 use crate::error::ApiError;
-use crate::extractor::{Json, Valid};
+use crate::extractor::{AuthUser, Json, Valid};
 use crate::models::{ApiErrorResponse, ParamsErrorResponse};
 
 #[utoipa::path(
     post,
     path = "",
     request_body = CreateBlogParams,
+    security(("bearer" = [])),
     responses(
         (status = 201, description = "Blog created", body = BlogSchema),
         (status = 400, description = "Bad request", body = ApiErrorResponse),
+        (status = 401, description = "Missing or invalid token", body = ApiErrorResponse),
         (status = 422, description = "Validation error", body = ParamsErrorResponse),
         (status = 500, description = "Internal server error", body = ApiErrorResponse),
     )
 )]
 async fn blogs_post(
-    state: State<AppState>,
+    State(state): State<AppState>,
+    auth: AuthUser,
     Valid(Json(params)): Valid<Json<CreateBlogParams>>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let blog = create_blog(&state.conn, params)
-        .await
-        .map_err(ApiError::from)?;
+    let blog = create_blog(&state.conn, auth.tenant_id, auth.user_id, params).await?;
 
-    let blog = blog.try_into_model().unwrap();
     Ok((StatusCode::CREATED, Json(BlogSchema::from(blog))))
 }
 
@@ -46,20 +45,19 @@ async fn blogs_post(
     params(
         BlogQuery
     ),
+    security(("bearer" = [])),
     responses(
-        (status = 200, description = "List blogs", body = BlogListSchema),
+        (status = 200, description = "List blogs of the caller's tenant", body = BlogListSchema),
+        (status = 401, description = "Missing or invalid token", body = ApiErrorResponse),
         (status = 500, description = "Internal server error", body = ApiErrorResponse),
     )
 )]
 async fn blogs_get(
-    state: State<AppState>,
-    query: Query<BlogQuery>,
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Query(query): Query<BlogQuery>,
 ) -> Result<impl IntoResponse, ApiError> {
-    let Query(query) = query;
-
-    let blogs = search_blogs(&state.conn, query)
-        .await
-        .map_err(ApiError::from)?;
+    let blogs = search_blogs(&state.conn, auth.tenant_id, query).await?;
     Ok(Json(BlogListSchema::from(blogs)))
 }
 
