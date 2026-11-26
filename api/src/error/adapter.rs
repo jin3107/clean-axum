@@ -1,5 +1,5 @@
 use axum::{extract::rejection::JsonRejection, http::StatusCode};
-use sea_orm::DbErr;
+use sea_orm::{DbErr, SqlErr};
 
 use app::error::UserError;
 
@@ -16,8 +16,8 @@ impl HTTPError for JsonRejection {
 
 impl HTTPError for DbErr {
     fn to_status_code(&self) -> StatusCode {
-        match self {
-            DbErr::ConnectionAcquire(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        match self.sql_err() {
+            Some(SqlErr::UniqueConstraintViolation(_)) => StatusCode::CONFLICT,
             _ => StatusCode::INTERNAL_SERVER_ERROR, // TODO:: more granularity
         }
     }

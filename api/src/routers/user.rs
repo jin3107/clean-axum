@@ -25,6 +25,7 @@ use crate::models::{ApiErrorResponse, ParamsErrorResponse};
     responses(
         (status = 201, description = "User created", body = UserSchema),
         (status = 400, description = "Bad request", body = ApiErrorResponse),
+        (status = 409, description = "Username already exists", body = ApiErrorResponse),
         (status = 422, description = "Validation error", body = ParamsErrorResponse),
         (status = 500, description = "Internal server error", body = ApiErrorResponse),
     )
