@@ -54,6 +54,6 @@ http-body-util = "0.1.3"
 serde_json = { workspace = true }
 
 [features]
-default = ["prefork"]
+default = []
 prefork = ["prefork/tokio"]
 shuttle = ["shuttle-axum", "shuttle-runtime", "shuttle-shared-db"]
