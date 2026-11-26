@@ -3,14 +3,18 @@ use std::time::Duration;
 use axum::Router;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 
+use app::auth::JwtKeys;
 use app::config::Config;
 use app::state::AppState;
 
 use crate::routers::create_router;
 
-// TODO: middleware, logging, authentication
-pub fn setup_router(conn: DatabaseConnection) -> Router {
-    create_router(AppState { conn })
+// TODO: middleware, logging
+pub fn setup_router(conn: DatabaseConnection, jwt_secret: &str) -> Router {
+    create_router(AppState {
+        conn,
+        jwt: JwtKeys::new(jwt_secret),
+    })
 }
 
 pub fn setup_config() -> Config {

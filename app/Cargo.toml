@@ -6,6 +6,12 @@ publish = false
 
 
 [dependencies]
+argon2 = { version = "0.5", features = ["std"] }
+jsonwebtoken = { version = "10", default-features = false, features = ["rust_crypto"] }
 models = { path = "../models" }
+rand_core = { version = "0.6", features = ["getrandom"] }
 
 sea-orm = { workspace = true }
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", features = ["rt"] }
+uuid = { version = "1", features = ["v4"] }

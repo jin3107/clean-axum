@@ -11,8 +11,11 @@ serde_json = { workspace = true }
 sea-orm = { workspace = true, features = [
   "sqlx-postgres",
   "sqlx-sqlite",
+  "sqlx-mysql",
+  "with-uuid",
   "runtime-tokio-rustls",
   "macros",
 ] }
 validator = { workspace = true, features = ["derive"] }
-utoipa = { workspace = true }
+utoipa = { workspace = true, features = ["uuid"] }
+uuid = { version = "1", features = ["serde"] }

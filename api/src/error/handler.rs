@@ -6,7 +6,7 @@ use axum::{
 };
 use sea_orm::DbErr;
 
-use app::error::UserError;
+use app::error::{AuthError, UserError};
 
 use super::{ApiError, HTTPError};
 use crate::models::ApiErrorResponse;
@@ -25,6 +25,9 @@ impl IntoResponse for ApiError {
             };
             (status, message.to_string())
         } else if let Some(err) = err.downcast_ref::<UserError>() {
+            (err.to_status_code(), err.to_string())
+        } else if let Some(err) = err.downcast_ref::<AuthError>() {
+            tracing::warn!(%err, "auth rejected:");
             (err.to_status_code(), err.to_string())
         } else if let Some(err) = err.downcast_ref::<JsonRejection>() {
             tracing::error!(%err, "error from extractor:");

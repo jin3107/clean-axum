@@ -1,6 +1,6 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use validator::ValidationErrors;
+use validator::{ValidationErrors, ValidationErrorsKind};
 
 use crate::models::ValidationErrorResponse;
 
@@ -30,12 +30,21 @@ impl<V: std::error::Error + 'static, E: std::error::Error + 'static> std::error:
     }
 }
 
-impl<V: serde::Serialize + std::error::Error, E: IntoResponse> IntoResponse
-    for ValidationRejection<V, E>
-{
+/// `validator` copies the rejected input into the error. Strip it for secrets so
+/// a password never reaches the response body or the logs.
+fn redact_secrets(errors: &mut ValidationErrors) {
+    if let Some(ValidationErrorsKind::Field(field)) = errors.errors_mut().get_mut("password") {
+        for error in field {
+            error.params.remove("value");
+        }
+    }
+}
+
+impl<E: IntoResponse> IntoResponse for ValidationRejection<ValidationErrors, E> {
     fn into_response(self) -> Response {
         match self {
-            ValidationRejection::Validator(v) => {
+            ValidationRejection::Validator(mut v) => {
+                redact_secrets(&mut v);
                 tracing::error!("Validation error: {v}");
                 (
                     StatusCode::UNPROCESSABLE_ENTITY,
