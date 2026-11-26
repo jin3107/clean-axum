@@ -7,7 +7,8 @@ Database chosen at generation time: **{{database}}**.
 
 ## Run
 
-Create `.env` with a random `JWT_SECRET`:
+Create `.env` with a random `JWT_SECRET`{% if database != "sqlite" %}; it also asks for the
+database password{% endif %}:
 
 ```powershell
 ./scripts/new-env.ps1
@@ -16,8 +17,9 @@ Create `.env` with a random `JWT_SECRET`:
 On Linux or macOS use `sh scripts/new-env.sh`.
 {%- if database != "sqlite" %}
 
-Create the database `{{crate_name}}` and set the real user and password in
-`DATABASE_URL` inside `.env`.
+The app connects to `{{db_user}}@{{db_host}}:{{db_port}}` and creates the database
+`{{ db_name | default: crate_name }}` on first run if it is missing. That needs the right to
+create databases. Change `DATABASE_URL` in `.env` to point somewhere else.
 {%- endif %}
 
 ```bash
@@ -47,7 +49,7 @@ Use a database made for tests, because rows are left behind.
 
 1. `sudo bash deploy/citus/setup-wsl.sh` installs a coordinator and two workers.
    It trusts every connection from 127.0.0.1.
-2. Set `DATABASE_URL="postgres://postgres@127.0.0.1:9700/{{crate_name}}"` and
+2. Set `DATABASE_URL="postgres://postgres@127.0.0.1:9700/{{ db_name | default: crate_name }}"` and
    start the app once so that migrations run.
 3. Run `deploy/citus/distribute.sql` on the coordinator, before adding data.
 
