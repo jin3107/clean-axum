@@ -7,6 +7,7 @@ use app::auth::JwtKeys;
 use app::config::Config;
 use app::state::AppState;
 
+use crate::database::create_database_if_missing;
 use crate::routers::create_router;
 
 // TODO: middleware, logging
@@ -23,6 +24,8 @@ pub fn setup_config() -> Config {
 }
 
 pub async fn setup_db(db_url: &str, prefork: bool) -> DatabaseConnection {
+    create_database_if_missing(db_url).await;
+
     let mut opt = ConnectOptions::new(db_url);
     opt.max_lifetime(Duration::from_secs(60));
 

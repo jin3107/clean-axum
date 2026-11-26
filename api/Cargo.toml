@@ -18,6 +18,13 @@ dotenvy = "0.15.7"
 
 # db
 sea-orm = { workspace = true }
+# only used to create a missing database; keep in step with sea-orm's sqlx
+sqlx = { version = "0.8", default-features = false, features = [
+    "runtime-tokio-rustls",
+    "postgres",
+    "mysql",
+    "migrate",
+] }
 
 # doc
 utoipa = { workspace = true }
