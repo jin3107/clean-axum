@@ -28,6 +28,7 @@ async fn user_main() {
     let app = setup_router(db);
     test_post_users(app.clone()).await;
     test_post_users_error(app.clone()).await;
+    test_post_users_duplicate(app.clone()).await;
     test_get_users(app).await;
 }
 

@@ -27,6 +27,14 @@ pub(super) async fn test_post_users_error(app: Router) {
     )
 }
 
+pub(super) async fn test_post_users_duplicate(app: Router) {
+    let response = make_post_request(app, "/users", r#"{"username": "test"}"#.to_owned()).await;
+    assert_eq!(response.status(), StatusCode::CONFLICT);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    assert_eq!(&body[..], br#"{"message":"Resource already exists"}"#);
+}
+
 pub(super) async fn test_get_users(app: Router) {
     let response = make_get_request(app, "/users").await;
     assert_eq!(response.status(), StatusCode::OK);

@@ -17,7 +17,13 @@ impl IntoResponse for ApiError {
 
         let (status, message) = if let Some(err) = err.downcast_ref::<DbErr>() {
             tracing::error!(%err, "error from db:");
-            (err.to_status_code(), "DB error".to_string()) // hide the detail
+            let status = err.to_status_code();
+            // hide the detail
+            let message = match status {
+                StatusCode::CONFLICT => "Resource already exists",
+                _ => "DB error",
+            };
+            (status, message.to_string())
         } else if let Some(err) = err.downcast_ref::<UserError>() {
             (err.to_status_code(), err.to_string())
         } else if let Some(err) = err.downcast_ref::<JsonRejection>() {
