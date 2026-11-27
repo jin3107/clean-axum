@@ -11,6 +11,10 @@ pub struct ApiErrorResponse {
 #[derive(Serialize, ToSchema)]
 pub struct ValidationErrorResponse<T> {
     pub message: String,
+    /// The problems found, keyed by field name.
+    // described by hand: a map used as a generic argument is referenced as a
+    // schema that never gets registered
+    #[schema(value_type = std::collections::HashMap<String, Vec<Object>>)]
     pub details: T,
 }
 

@@ -9,6 +9,7 @@ use utils::testing::{make_request, setup_test_db};
 
 mod auth;
 mod blog;
+mod docs;
 mod root;
 mod security;
 mod session;
