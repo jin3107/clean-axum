@@ -51,6 +51,7 @@ app = { path = "app" }
 models = { path = "models" }
 
 http-body-util = "0.1.3"
+tower = { workspace = true, features = ["util"] }
 serde_json = { workspace = true }
 uuid = { version = "1", features = ["v4"] }
 

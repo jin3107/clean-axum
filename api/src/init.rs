@@ -2,20 +2,38 @@ use std::time::Duration;
 
 use axum::Router;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
+use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
+use tracing::Level;
 
 use app::auth::JwtKeys;
-use app::config::Config;
+use app::config::{Config, SecurityConfig};
 use app::state::AppState;
 use utils::create_database_if_missing;
 
+use crate::middleware::{cors_layer, RateLimiter};
 use crate::routers::create_router;
 
-// TODO: middleware, logging
-pub fn setup_router(conn: DatabaseConnection, jwt_secret: &str) -> Router {
-    create_router(AppState {
+pub fn setup_router(conn: DatabaseConnection, security: &SecurityConfig) -> Router {
+    let state = AppState {
         conn,
-        jwt: JwtKeys::new(jwt_secret),
-    })
+        jwt: JwtKeys::new(
+            &security.jwt_secret,
+            &security.jwt_issuer,
+            &security.jwt_audience,
+        ),
+    };
+    create_router(state, RateLimiter::new(security.auth_rate_limit))
+}
+
+/// Adds CORS and request logging. Apply it after every route has been added,
+/// because a layer does not cover routes merged later.
+pub fn with_middleware(router: Router, security: &SecurityConfig) -> Router {
+    router.layer(cors_layer(&security.cors_origins)).layer(
+        // method, path, status and latency; headers and bodies are not logged
+        TraceLayer::new_for_http()
+            .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+            .on_response(DefaultOnResponse::new().level(Level::INFO)),
+    )
 }
 
 pub fn setup_config() -> Config {

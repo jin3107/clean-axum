@@ -59,13 +59,17 @@ async fn protected_routes_need_a_valid_token() {
     let app = app().await;
     let auth = register(&app, &unique("clinic")).await;
 
-    let forged = app::auth::JwtKeys::new("another-secret-0123456789abcdefgh")
-        .issue(
-            uuid::Uuid::new_v4(),
-            uuid::Uuid::new_v4(),
-            models::domains::role::Role::Admin,
-        )
-        .unwrap();
+    let forged = app::auth::JwtKeys::new(
+        "another-secret-0123456789abcdefgh",
+        "test-issuer",
+        "test-audience",
+    )
+    .issue(
+        uuid::Uuid::new_v4(),
+        uuid::Uuid::new_v4(),
+        models::domains::role::Role::Admin,
+    )
+    .unwrap();
     assert_ne!(TEST_SECRET, "another-secret-0123456789abcdefgh");
 
     for bad in [None, Some("garbage"), Some(forged.as_str())] {

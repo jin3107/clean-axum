@@ -33,6 +33,7 @@ fn token_response(state: &AppState, user: user::Model) -> Result<TokenSchema, Ap
         (status = 400, description = "Bad request", body = ApiErrorResponse),
         (status = 409, description = "Tenant name already exists", body = ApiErrorResponse),
         (status = 422, description = "Validation error", body = ParamsErrorResponse),
+        (status = 429, description = "Too many requests", body = ApiErrorResponse),
         (status = 500, description = "Internal server error", body = ApiErrorResponse),
     )
 )]
@@ -55,6 +56,7 @@ async fn register_post(
         (status = 200, description = "Logged in", body = TokenSchema),
         (status = 401, description = "Invalid credentials", body = ApiErrorResponse),
         (status = 422, description = "Validation error", body = ParamsErrorResponse),
+        (status = 429, description = "Too many requests", body = ApiErrorResponse),
         (status = 500, description = "Internal server error", body = ApiErrorResponse),
     )
 )]
