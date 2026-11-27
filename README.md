@@ -27,6 +27,7 @@ project generation. See [License and credits](#license-and-credits).
 | PostgreSQL | a user that may create databases, or an existing database |
 | Node.js 22.12 or newer | for the client; CI uses 24 |
 | cargo-generate | to create projects from the template |
+| Docker with Compose | optional, see [Docker](#docker) |
 
 ## Create a new project
 
@@ -140,6 +141,31 @@ The `main` branch is a normal project with the roles `admin`, `doctor` and
 
 Tests use `TEST_DATABASE_URL`, or else the database of `DATABASE_URL` with a
 `_test` suffix, which is created when missing. Test rows are left behind.
+
+## Docker
+
+Runs PostgreSQL, the API and the client (served by Nginx).
+
+```bash
+cp .env.docker.example .env.docker
+```
+
+Set `POSTGRES_PASSWORD` (letters and digits) and `JWT_SECRET` (at least 32 random
+characters) in `.env.docker`, then:
+
+```bash
+docker compose --env-file .env.docker up -d --build
+```
+
+| Address | Content |
+|---|---|
+| <http://localhost:8080> | web client; `/api` is forwarded to the API |
+| <http://localhost:8081/docs/> | API docs, with `APP_ENV=development` |
+
+Both ports listen on this machine only. Behind the web service, sign-in attempts
+are limited by Nginx. `docker compose --env-file .env.docker down` stops the stack;
+add `-v` to delete its data as well. With Docker inside WSL, run these commands in
+the Ubuntu shell. Compose does not set up Citus.
 
 ## Configuration
 
