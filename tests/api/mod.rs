@@ -2,6 +2,8 @@ use api::{setup_router, with_middleware};
 use app::config::SecurityConfig;
 use axum::Router;
 use http_body_util::BodyExt;
+use models::domains::role::Role;
+use sea_orm::{ActiveEnum, Iterable};
 use serde_json::{json, Value};
 use utils::testing::{make_request, setup_test_db};
 
@@ -33,6 +35,14 @@ pub(super) async fn app() -> Router {
 pub(super) async fn app_with(security: SecurityConfig) -> Router {
     let db = setup_test_db().await.expect("Set up db failed!");
     with_middleware(setup_router(db, &security), &security)
+}
+
+/// Any role without admin rights, so that tests do not depend on role names.
+pub(super) fn other_role() -> String {
+    Role::iter()
+        .find(|role| *role != Role::Admin)
+        .expect("at least one role besides admin")
+        .to_value()
 }
 
 /// Tenant names are unique per run so tests can share a real database.
