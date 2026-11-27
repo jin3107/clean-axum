@@ -200,6 +200,7 @@ the Ubuntu shell. Compose does not set up Citus.
 | `JWT_SECRET` | signing key, at least 32 characters |
 | `JWT_ISSUER`, `JWT_AUDIENCE` | values that tokens must carry |
 | `APP_ENV` | API docs are served only for `development` |
+| `OPEN_DOCS` | `1` opens Swagger UI in the default browser at startup; set `0` to turn it off |
 | `CORS_ORIGINS` | browser origins allowed to call the API, comma separated |
 | `AUTH_RATE_LIMIT` | requests per minute and address for register and login; `0` turns it off |
 

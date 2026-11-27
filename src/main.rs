@@ -1,4 +1,6 @@
 #[cfg(not(feature = "shuttle"))]
+mod browser;
+#[cfg(not(feature = "shuttle"))]
 mod tokio;
 
 #[cfg(not(feature = "shuttle"))]

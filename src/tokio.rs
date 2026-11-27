@@ -4,6 +4,8 @@ use api::{setup_config, setup_db, setup_router, with_middleware, Config};
 use doc::ApiDoc;
 use utils::migrate;
 
+use crate::browser;
+
 async fn worker(
     child_num: u32,
     config: &'static Config,
@@ -25,6 +27,11 @@ async fn worker(
     let router = with_middleware(router, &config.security);
 
     let listener = tokio::net::TcpListener::from_std(listener).expect("bind to port");
+    // once per start, and only now that migrations are done and the port is open
+    if child_num == 0 && config.open_docs && config.security.docs_enabled {
+        let address = listener.local_addr().expect("listening address");
+        browser::open(&browser::docs_url(address));
+    }
     // the rate limiter needs the client address
     let service = router.into_make_service_with_connect_info::<SocketAddr>();
     axum::serve(listener, service).await.expect("start server");
