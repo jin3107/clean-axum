@@ -27,3 +27,7 @@ Thumbs.db
 # Shuttle (optional `shuttle` feature)
 .shuttle*
 Secrets*.toml
+
+# Web client
+node_modules/
+dist/

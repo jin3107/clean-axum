@@ -37,9 +37,12 @@ cargo generate rust-api --name my-app
 
 ## Placeholders
 
+`client/src` and `client/public` are copied without placeholder processing. To use
+a placeholder there, remove the folder from `exclude` in `cargo-generate.toml`.
+
 | Placeholder | Used in |
 |---|---|
-| `project-name` | package name, README, default token issuer and audience |
+| `project-name` | package names, README, page title, default token issuer and audience |
 | `crate_name` | log filter, default database name |
 | `db_host`, `db_port`, `db_user`, `db_name` | `.env.example`, README, Citus script |
 | `authors` | `Cargo.toml` |

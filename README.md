@@ -1,7 +1,8 @@
 # {{project-name}}
 
 REST API built with Axum, SeaORM, PostgreSQL and utoipa, organised as a clean
-architecture workspace, with JWT authentication, roles and tenant isolation.
+architecture workspace, with JWT authentication, roles and tenant isolation, and
+a React, TypeScript and Vite client in `client/`.
 
 ## Run
 
@@ -24,6 +25,20 @@ cargo run
 
 Migrations run at startup. With `APP_ENV=development` the API docs are at
 <http://localhost:3000/docs/> (Swagger UI) and <http://localhost:3000/scalar>.
+
+## Client
+
+With the API running, in a second terminal:
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+Open <http://localhost:5173>. The dev server forwards `/api` to
+`http://127.0.0.1:3000`; change `client/vite.config.ts` if you change `PORT`.
+`npm run lint` and `npm run build` check the client.
 
 ## Sessions
 
@@ -75,6 +90,7 @@ plus a line in `distribute.sql`.
 | `migration` | SeaORM migrations |
 | `doc` | OpenAPI document |
 | `utils` | database and test helpers |
+| `client` | web client |
 
 ## Credits
 
