@@ -5,6 +5,13 @@ ignore = [".github", "TEMPLATE.md", "client/node_modules", "client/dist"]
 # copied as they are: JSX such as style={{ ... }} looks like a placeholder
 exclude = ["client/src/**", "client/public/**"]
 
+# `admin` always exists and is the only role allowed to create users.
+[placeholders.roles]
+type = "string"
+prompt = "Roles besides admin, comma separated (no spaces)"
+default = "member"
+regex = "^[a-z][a-z0-9_]{0,30}(,[a-z][a-z0-9_]{0,30})*$"
+
 # PostgreSQL connection settings. The password is never a placeholder:
 # scripts/new-env asks for it and writes it to the ignored .env.
 [placeholders.db_host]

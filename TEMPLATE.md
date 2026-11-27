@@ -15,8 +15,9 @@ cargo install cargo-generate --locked
 cargo generate --git https://github.com/jin3107/clean-axum.git --branch template --name my-app
 ```
 
-You are asked for the PostgreSQL host, port, user and database name. Answer on the
-command line to skip a question, for example `-d db_port=5433`. The password is
+You are asked for the roles and the PostgreSQL host, port, user and database name. Answer on the
+command line to skip a question, for example
+`-d roles=doctor,receptionist -d db_port=5433`. The password is
 asked later by `scripts/new-env`.
 
 ## Short alias
@@ -45,4 +46,5 @@ a placeholder there, remove the folder from `exclude` in `cargo-generate.toml`.
 | `project-name` | package names, README, page title, default token issuer and audience |
 | `crate_name` | log filter, default database name |
 | `db_host`, `db_port`, `db_user`, `db_name` | `.env.example`, README, Citus script |
+| `roles` | `models/src/domains/role.rs`, README |
 | `authors` | `Cargo.toml` |

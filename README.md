@@ -50,6 +50,12 @@ press **Authorize** and paste `access_token`.
 new one, and send only one refresh request at a time. `POST /auth/logout` ends
 the session.
 
+## Roles
+
+`admin`{% assign names = roles | split: "," | uniq %}{% for name in names %}{% if name != "admin" %}, `{{ name }}`{% endif %}{% endfor %}.
+Only `admin` creates users. To change the list, edit `models/src/domains/role.rs`;
+at least one role besides `admin` is needed by the tests.
+
 ## Settings
 
 | Variable | Meaning |

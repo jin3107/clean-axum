@@ -6,12 +6,16 @@ use utoipa::ToSchema;
     Clone, Copy, Debug, PartialEq, Eq, EnumIter, DeriveActiveEnum, Serialize, Deserialize, ToSchema,
 )]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::N(32))")]
-#[serde(rename_all = "lowercase")]
 pub enum Role {
     #[sea_orm(string_value = "admin")]
+    #[serde(rename = "admin")]
     Admin,
-    #[sea_orm(string_value = "doctor")]
-    Doctor,
-    #[sea_orm(string_value = "receptionist")]
-    Receptionist,
+{%- assign names = roles | split: "," | uniq %}
+{%- for name in names %}
+{%- if name != "admin" %}
+    #[sea_orm(string_value = "{{ name }}")]
+    #[serde(rename = "{{ name }}")]
+    {{ name | pascal_case }},
+{%- endif %}
+{%- endfor %}
 }
