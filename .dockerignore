@@ -1,0 +1,12 @@
+# keep build output and secrets out of the image build context
+target/
+client/
+.git/
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.pfx
+*.log
+logs/

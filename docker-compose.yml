@@ -1,0 +1,50 @@
+# docker compose --env-file .env.docker up -d --build
+name: clean-axum
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.docker}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      # over TCP, because the temporary server used during setup is socket only
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d $$POSTGRES_DB"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-app}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env.docker}
+      JWT_ISSUER: ${JWT_ISSUER:-clean-axum}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-clean-axum-client}
+      APP_ENV: ${APP_ENV:-production}
+      # the browser reaches the API through the web service, so no CORS is needed
+      CORS_ORIGINS: ""
+      # limited per client by the web service
+      AUTH_RATE_LIMIT: "0"
+    ports:
+      # direct access for the API docs; it skips the sign-in limit of the web
+      # service, so keep it on this machine
+      - "127.0.0.1:${API_PORT:-8081}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build: ./client
+    ports:
+      # only this machine; change the address to publish it
+      - "127.0.0.1:${WEB_PORT:-8080}:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:
