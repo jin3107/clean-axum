@@ -25,7 +25,7 @@ asked later by `scripts/new-env`.
 Add to `cargo-generate.toml` in your `CARGO_HOME` folder:
 
 ```toml
-[favorites.rust-api]
+[favorites.catemplate-rust]
 git = "https://github.com/jin3107/clean-axum.git"
 branch = "template"
 ```
@@ -33,7 +33,7 @@ branch = "template"
 Then:
 
 ```bash
-cargo generate rust-api --name my-app
+cargo generate catemplate-rust --name my-app
 ```
 
 ## Placeholders
