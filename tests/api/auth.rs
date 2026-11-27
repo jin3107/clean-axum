@@ -1,6 +1,6 @@
 use serde_json::json;
 
-use super::{app, call, register, token, unique, TEST_SECRET};
+use super::{app, call, other_role, register, token, unique, TEST_SECRET};
 
 #[tokio::test]
 async fn register_then_login() {
@@ -87,29 +87,30 @@ async fn only_admin_creates_users() {
     let app = app().await;
     let tenant = unique("clinic");
     let admin = register(&app, &tenant).await;
-    let doctor = json!({"username": "doctor", "password": "password-123", "role": "doctor"});
+    let role = other_role();
+    let member = json!({"username": "member", "password": "password-123", "role": role});
 
     let (status, body) = call(
         &app,
         "POST",
         "/users",
         Some(token(&admin)),
-        Some(doctor.clone()),
+        Some(member.clone()),
     )
     .await;
     assert_eq!(status, 201, "{body}");
     assert_eq!(body["tenant_id"], admin["user"]["tenant_id"]);
 
-    let (status, _) = call(&app, "POST", "/users", Some(token(&admin)), Some(doctor)).await;
+    let (status, _) = call(&app, "POST", "/users", Some(token(&admin)), Some(member)).await;
     assert_eq!(status, 409);
 
-    let login = json!({"tenant_name": tenant, "username": "doctor", "password": "password-123"});
-    let (_, doctor) = call(&app, "POST", "/auth/login", None, Some(login)).await;
+    let login = json!({"tenant_name": tenant, "username": "member", "password": "password-123"});
+    let (_, member) = call(&app, "POST", "/auth/login", None, Some(login)).await;
     let escalate = json!({"username": "evil", "password": "password-123", "role": "admin"});
-    let (status, _) = call(&app, "POST", "/users", Some(token(&doctor)), Some(escalate)).await;
+    let (status, _) = call(&app, "POST", "/users", Some(token(&member)), Some(escalate)).await;
     assert_eq!(status, 403);
 
-    let unknown = json!({"username": "x1", "password": "password-123", "role": "superadmin"});
+    let unknown = json!({"username": "x1", "password": "password-123", "role": "no-such-role"});
     let (status, _) = call(&app, "POST", "/users", Some(token(&admin)), Some(unknown)).await;
     assert!(status == 400 || status == 422, "{status}");
 }
