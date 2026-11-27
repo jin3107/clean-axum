@@ -76,6 +76,8 @@ cargo generate catemplate-rust --name clinic-app -d roles=doctor,receptionist -d
 
 ### Run the generated project
 
+PostgreSQL must be running.
+
 ```powershell
 cd my-app
 ./scripts/new-env.ps1
@@ -83,7 +85,8 @@ cargo run
 ```
 
 On Linux or macOS use `sh scripts/new-env.sh`. The script writes `.env` with a
-random `JWT_SECRET` and asks for the database password.
+random `JWT_SECRET` and asks for the database password. The first build takes
+several minutes; the database is created on first start when missing.
 
 In a second terminal:
 
@@ -98,6 +101,26 @@ npm run dev
 | <http://localhost:5173> | web client |
 | <http://localhost:3000/docs/> | Swagger UI |
 | <http://localhost:3000/scalar> | Scalar |
+
+To try the API, run `POST /auth/register` in Swagger UI, copy `access_token` from
+the response, press **Authorize** and paste it. Then `POST /users` adds a user
+with another role.
+
+`cargo test --workspace` runs the tests of the project in a second database with
+a `_test` suffix.
+
+### Run the generated project with Docker
+
+This replaces the local PostgreSQL and the two terminals above. `scripts/new-env`
+has already created `.env.docker` with random secrets, so in the project folder:
+
+```bash
+docker compose --env-file .env.docker up -d --build
+```
+
+Open <http://localhost:8080>. With Docker inside WSL, run the command in the Ubuntu
+shell, where `D:\work\my-app` is `/mnt/d/work/my-app`. Stopping and ports are as in
+[Docker](#docker).
 
 ## Work on this repository
 
