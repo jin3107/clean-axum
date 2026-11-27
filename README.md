@@ -38,6 +38,8 @@ create databases. Change `DATABASE_URL` in `.env` to point somewhere else.
 
 Migrations run at startup. With `APP_ENV=development` the API docs are at
 <http://localhost:3000/docs/> (Swagger UI) and <http://localhost:3000/scalar>.
+With `OPEN_DOCS=1`, set in a new `.env`, Swagger UI opens in the default browser
+once the API is ready.
 
 ## Client
 
@@ -55,7 +57,7 @@ Open <http://localhost:5173>. The dev server forwards `/api` to
 
 ## Try the API
 
-1. Open <http://localhost:3000/docs/>.
+1. Open <http://localhost:3000/docs/>, if it has not opened by itself.
 2. Run `POST /auth/register`. It creates a tenant and its admin.
 3. Copy `access_token` from the response, press **Authorize** and paste it.
 4. Run `POST /users` to add a user with another role, then `GET /users`.
@@ -104,6 +106,7 @@ at least one role besides `admin` is needed by the tests.
 | Variable | Meaning |
 |---|---|
 | `APP_ENV` | API docs are served only for `development` |
+| `OPEN_DOCS` | `1` opens Swagger UI in the default browser at startup; set `0` to turn it off |
 | `CORS_ORIGINS` | browser origins allowed to call the API, comma separated |
 | `AUTH_RATE_LIMIT` | requests per minute and address for register and login |
 | `JWT_ISSUER`, `JWT_AUDIENCE` | values tokens must carry |

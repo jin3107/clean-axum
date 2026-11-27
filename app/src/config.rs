@@ -53,6 +53,8 @@ pub struct Config {
     pub host: String,
     pub port: u32,
     pub prefork: bool,
+    /// Open the API docs in the default browser at startup, when they are served.
+    pub open_docs: bool,
     pub security: SecurityConfig,
 }
 
@@ -66,6 +68,7 @@ impl Config {
                 .parse()
                 .expect("PORT is not a number"),
             prefork: std::env::var("PREFORK").is_ok_and(|v| v == "1"),
+            open_docs: std::env::var("OPEN_DOCS").is_ok_and(|v| v == "1"),
             security: SecurityConfig::from_env(),
         }
     }
