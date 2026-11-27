@@ -1,6 +1,6 @@
+mod database;
 mod db;
-mod file;
 pub mod testing;
 
+pub use database::create_database_if_missing;
 pub use db::migrate;
-pub use file::create_dev_db;

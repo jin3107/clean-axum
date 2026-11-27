@@ -1,4 +1,3 @@
-mod database;
 mod error;
 mod extractor;
 mod init;

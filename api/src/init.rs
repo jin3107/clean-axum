@@ -6,8 +6,8 @@ use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use app::auth::JwtKeys;
 use app::config::Config;
 use app::state::AppState;
+use utils::create_database_if_missing;
 
-use crate::database::create_database_if_missing;
 use crate::routers::create_router;
 
 // TODO: middleware, logging

@@ -4,7 +4,7 @@ use super::{app, call, register, token, unique, TEST_SECRET};
 
 #[tokio::test]
 async fn register_then_login() {
-    let app = app("auth_login").await;
+    let app = app().await;
     let tenant = unique("clinic");
     let auth = register(&app, &tenant).await;
     assert_eq!(auth["user"]["role"], "admin");
@@ -34,7 +34,7 @@ async fn register_then_login() {
 
 #[tokio::test]
 async fn duplicate_tenant_is_conflict() {
-    let app = app("auth_duplicate").await;
+    let app = app().await;
     let tenant = unique("clinic");
     register(&app, &tenant).await;
 
@@ -46,7 +46,7 @@ async fn duplicate_tenant_is_conflict() {
 
 #[tokio::test]
 async fn rejected_password_is_not_echoed() {
-    let app = app("auth_redact").await;
+    let app = app().await;
     let body = json!({"tenant_name": unique("clinic"), "username": "admin", "password": "s3cret!"});
     let (status, body) = call(&app, "POST", "/auth/register", None, Some(body)).await;
     assert_eq!(status, 422);
@@ -56,7 +56,7 @@ async fn rejected_password_is_not_echoed() {
 
 #[tokio::test]
 async fn protected_routes_need_a_valid_token() {
-    let app = app("auth_token").await;
+    let app = app().await;
     let auth = register(&app, &unique("clinic")).await;
 
     let forged = app::auth::JwtKeys::new("another-secret-0123456789abcdefgh")
@@ -80,7 +80,7 @@ async fn protected_routes_need_a_valid_token() {
 
 #[tokio::test]
 async fn only_admin_creates_users() {
-    let app = app("auth_roles").await;
+    let app = app().await;
     let tenant = unique("clinic");
     let admin = register(&app, &tenant).await;
     let doctor = json!({"username": "doctor", "password": "password-123", "role": "doctor"});

@@ -2,7 +2,7 @@ use api::setup_router;
 use axum::Router;
 use http_body_util::BodyExt;
 use serde_json::{json, Value};
-use utils::testing::{make_request, setup_test_db, test_db_url};
+use utils::testing::{make_request, setup_test_db};
 
 mod auth;
 mod blog;
@@ -11,9 +11,8 @@ mod tenancy;
 
 pub(super) const TEST_SECRET: &str = "test-only-secret-0123456789abcdef";
 
-pub(super) async fn app(name: &str) -> Router {
-    let url = test_db_url(&format!("sqlite::{name}?mode=memory&cache=shared"));
-    let db = setup_test_db(&url).await.expect("Set up db failed!");
+pub(super) async fn app() -> Router {
+    let db = setup_test_db().await.expect("Set up db failed!");
     setup_router(db, TEST_SECRET)
 }
 
