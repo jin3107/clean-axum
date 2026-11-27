@@ -9,6 +9,7 @@ mod auth;
 mod blog;
 mod root;
 mod security;
+mod session;
 mod tenancy;
 
 pub(super) const TEST_SECRET: &str = "test-only-secret-0123456789abcdef";

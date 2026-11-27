@@ -38,8 +38,8 @@ pub async fn search_users(
         .await
 }
 
-pub async fn get_user(
-    db: &DbConn,
+pub async fn get_user<C: ConnectionTrait>(
+    db: &C,
     tenant: TenantId,
     id: Uuid,
 ) -> Result<Option<user::Model>, DbErr> {

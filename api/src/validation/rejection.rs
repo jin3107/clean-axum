@@ -33,9 +33,11 @@ impl<V: std::error::Error + 'static, E: std::error::Error + 'static> std::error:
 /// `validator` copies the rejected input into the error. Strip it for secrets so
 /// a password never reaches the response body or the logs.
 fn redact_secrets(errors: &mut ValidationErrors) {
-    if let Some(ValidationErrorsKind::Field(field)) = errors.errors_mut().get_mut("password") {
-        for error in field {
-            error.params.remove("value");
+    for name in ["password", "refresh_token"] {
+        if let Some(ValidationErrorsKind::Field(field)) = errors.errors_mut().get_mut(name) {
+            for error in field {
+                error.params.remove("value");
+            }
         }
     }
 }

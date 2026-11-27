@@ -140,6 +140,7 @@ dependencies = [
  "rand_core 0.6.4",
  "sea-orm",
  "serde",
+ "sha2",
  "tokio",
  "uuid",
 ]
