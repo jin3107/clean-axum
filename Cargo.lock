@@ -121,11 +121,11 @@ dependencies = [
  "sea-orm",
  "serde",
  "serde_json",
- "sqlx",
  "tower",
  "tower-cookies",
  "tower-http",
  "tracing",
+ "utils",
  "utoipa",
  "uuid",
  "validator",
@@ -1783,7 +1783,6 @@ version = "0.30.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2e99fb7a497b1e3339bc746195567ed8d3e24945ecd636e3619d20b9de9e9149"
 dependencies = [
- "cc",
  "pkg-config",
  "vcpkg",
 ]
@@ -4027,9 +4026,13 @@ name = "utils"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "dotenvy",
  "migration",
  "sea-orm",
+ "sqlx",
+ "tokio",
  "tower",
+ "tracing",
 ]
 
 [[package]]

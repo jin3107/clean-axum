@@ -4,7 +4,7 @@ use super::{app, call, register, token, unique};
 
 #[tokio::test]
 async fn author_comes_from_the_token() {
-    let app = app("blog").await;
+    let app = app().await;
     let admin = register(&app, &unique("clinic")).await;
 
     // a client-supplied author or tenant is ignored

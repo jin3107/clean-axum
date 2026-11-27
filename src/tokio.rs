@@ -1,6 +1,6 @@
 use api::{setup_config, setup_db, setup_router};
 use doc::ApiDoc;
-use utils::{create_dev_db, migrate};
+use utils::migrate;
 
 async fn worker(
     child_num: u32,
@@ -27,8 +27,6 @@ async fn worker(
 fn run_prefork(db_url: &str, jwt_secret: &str, listener: std::net::TcpListener) {
     let db_url: &'static str = Box::leak(db_url.to_owned().into_boxed_str());
     let jwt_secret: &'static str = Box::leak(jwt_secret.to_owned().into_boxed_str());
-    create_dev_db(db_url);
-
     let num_of_cores = std::thread::available_parallelism().unwrap().get() as u32;
     let is_parent = prefork::Prefork::from_resource(listener)
         .with_num_processes(num_of_cores)
@@ -44,8 +42,6 @@ fn run_prefork(db_url: &str, jwt_secret: &str, listener: std::net::TcpListener) 
 }
 
 fn run_non_prefork(db_url: &str, jwt_secret: &str, listener: std::net::TcpListener) {
-    create_dev_db(db_url);
-
     let rt = tokio::runtime::Runtime::new().unwrap();
     rt.block_on(worker(0, db_url, jwt_secret, false, listener));
 }

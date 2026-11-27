@@ -10,8 +10,6 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 sea-orm = { workspace = true, features = [
   "sqlx-postgres",
-  "sqlx-sqlite",
-  "sqlx-mysql",
   "with-uuid",
   "runtime-tokio-rustls",
   "macros",
