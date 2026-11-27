@@ -4,7 +4,7 @@ use super::{app, call, register, token, unique};
 
 #[tokio::test]
 async fn tenants_cannot_see_each_other() {
-    let app = app("tenancy").await;
+    let app = app().await;
     let a = register(&app, &unique("clinic-a")).await;
     // the same username is allowed in another tenant
     let b = register(&app, &unique("clinic-b")).await;

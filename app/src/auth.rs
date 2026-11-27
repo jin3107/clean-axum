@@ -2,7 +2,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use argon2::password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString};
 use argon2::Argon2;
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use rand_core::OsRng;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -11,7 +11,8 @@ use models::domains::role::Role;
 
 use crate::error::AuthError;
 
-pub const TOKEN_TTL_SECS: u64 = 60 * 60;
+// short, because an access token cannot be revoked
+pub const TOKEN_TTL_SECS: u64 = 15 * 60;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -19,19 +20,25 @@ pub struct Claims {
     pub tenant_id: Uuid,
     pub role: Role,
     pub exp: u64,
+    pub iss: String,
+    pub aud: String,
 }
 
 #[derive(Clone)]
 pub struct JwtKeys {
     encoding: EncodingKey,
     decoding: DecodingKey,
+    issuer: String,
+    audience: String,
 }
 
 impl JwtKeys {
-    pub fn new(secret: &str) -> Self {
+    pub fn new(secret: &str, issuer: &str, audience: &str) -> Self {
         Self {
             encoding: EncodingKey::from_secret(secret.as_bytes()),
             decoding: DecodingKey::from_secret(secret.as_bytes()),
+            issuer: issuer.to_string(),
+            audience: audience.to_string(),
         }
     }
 
@@ -45,13 +52,21 @@ impl JwtKeys {
             tenant_id,
             role,
             exp: now + TOKEN_TTL_SECS,
+            iss: self.issuer.clone(),
+            aud: self.audience.clone(),
         };
         encode(&Header::default(), &claims, &self.encoding).map_err(|_| AuthError::Internal)
     }
 
-    /// Accepts HS256 only and rejects expired tokens.
+    /// Accepts HS256 only, and rejects tokens that expired or were issued by or
+    /// for someone else.
     pub fn verify(&self, token: &str) -> Result<Claims, AuthError> {
-        decode::<Claims>(token, &self.decoding, &Validation::default())
+        let mut validation = Validation::new(Algorithm::HS256);
+        validation.set_issuer(&[&self.issuer]);
+        validation.set_audience(&[&self.audience]);
+        validation.set_required_spec_claims(&["exp", "iss", "aud"]);
+
+        decode::<Claims>(token, &self.decoding, &validation)
             .map(|data| data.claims)
             .map_err(|_| AuthError::InvalidToken)
     }

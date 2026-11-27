@@ -1,5 +1,5 @@
 use sea_orm::DbErr;
-use utils::testing::{setup_test_db, test_db_url};
+use utils::testing::setup_test_db;
 
 use app::persistence::blog::create_blog;
 use app::persistence::tenant::create_tenant_with_admin;
@@ -9,9 +9,7 @@ use models::params::blog::CreateBlogParams;
 
 #[tokio::test]
 async fn database_enforces_tenant_boundaries() {
-    let db = setup_test_db(&test_db_url("sqlite::memory:"))
-        .await
-        .expect("Set up db failed!");
+    let db = setup_test_db().await.expect("Set up db failed!");
     let register =
         |name: String| create_tenant_with_admin(&db, name, "admin".to_string(), "hash".to_string());
     let a = register(format!("a-{}", uuid::Uuid::new_v4()))

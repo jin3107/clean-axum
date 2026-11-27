@@ -1,38 +1,48 @@
 # {{project-name}}
 
-REST API built with Axum, SeaORM and utoipa, organised as a clean architecture
-workspace, with JWT authentication, roles and tenant isolation.
-
-Database chosen at generation time: **{{database}}**.
+REST API built with Axum, SeaORM, PostgreSQL and utoipa, organised as a clean
+architecture workspace, with JWT authentication, roles and tenant isolation.
 
 ## Run
 
-Create `.env` with a random `JWT_SECRET`{% if database != "sqlite" %}; it also asks for the
-database password{% endif %}:
+Create `.env`. The script generates `JWT_SECRET` and asks for the database
+password:
 
 ```powershell
 ./scripts/new-env.ps1
 ```
 
 On Linux or macOS use `sh scripts/new-env.sh`.
-{%- if database != "sqlite" %}
 
 The app connects to `{{db_user}}@{{db_host}}:{{db_port}}` and creates the database
 `{{ db_name | default: crate_name }}` on first run if it is missing. That needs the right to
 create databases. Change `DATABASE_URL` in `.env` to point somewhere else.
-{%- endif %}
 
 ```bash
 cargo run
 ```
 
-Migrations run at startup. API docs: <http://localhost:3000/docs/> (Swagger UI)
-and <http://localhost:3000/scalar>.
+Migrations run at startup. With `APP_ENV=development` the API docs are at
+<http://localhost:3000/docs/> (Swagger UI) and <http://localhost:3000/scalar>.
 
-## First calls
+## Sessions
 
-`POST /auth/register` creates a tenant and its admin and returns a token. In
-Swagger UI, press **Authorize** and paste `access_token`.
+`POST /auth/register` creates a tenant and its admin. It and `POST /auth/login`
+return an access token (15 minutes) and a refresh token (7 days). In Swagger UI,
+press **Authorize** and paste `access_token`.
+
+`POST /auth/refresh` returns a new pair. Each refresh token works once: store the
+new one, and send only one refresh request at a time. `POST /auth/logout` ends
+the session.
+
+## Settings
+
+| Variable | Meaning |
+|---|---|
+| `APP_ENV` | API docs are served only for `development` |
+| `CORS_ORIGINS` | browser origins allowed to call the API, comma separated |
+| `AUTH_RATE_LIMIT` | requests per minute and address for register and login |
+| `JWT_ISSUER`, `JWT_AUDIENCE` | values tokens must carry |
 
 ## Test
 
@@ -40,10 +50,9 @@ Swagger UI, press **Authorize** and paste `access_token`.
 cargo test --workspace
 ```
 
-Tests use in-memory SQLite. To run them against another server:
-`TEST_DATABASE_URL=<url> cargo test --workspace -- --test-threads=1`.
-Use a database made for tests, because rows are left behind.
-{%- if database == "postgres" %}
+Tests need PostgreSQL. They use `TEST_DATABASE_URL`, or else the database in
+`DATABASE_URL` with a `_test` suffix, which is created when missing. Rows are left
+behind.
 
 ## Citus (optional, local development only)
 
@@ -55,14 +64,13 @@ Use a database made for tests, because rows are left behind.
 
 Every new tenant table needs `tenant_id` in its primary key and unique indexes,
 plus a line in `distribute.sql`.
-{%- endif %}
 
 ## Layout
 
 | Crate | Content |
 |---|---|
-| `api` | routers, extractors, error mapping |
-| `app` | use cases, persistence, auth, config |
+| `api` | routers, extractors, middleware, error mapping |
+| `app` | use cases, persistence, auth, sessions, config |
 | `models` | entities, parameters, queries, schemas |
 | `migration` | SeaORM migrations |
 | `doc` | OpenAPI document |

@@ -1,40 +1,41 @@
-use api::{setup_config, setup_db, setup_router};
+use std::net::SocketAddr;
+
+use api::{setup_config, setup_db, setup_router, with_middleware, Config};
 use doc::ApiDoc;
-use utils::{create_dev_db, migrate};
+use utils::migrate;
 
 async fn worker(
     child_num: u32,
-    db_url: &str,
-    jwt_secret: &str,
+    config: &'static Config,
     prefork: bool,
     listener: std::net::TcpListener,
 ) {
     tracing::info!("Worker {} started", child_num);
 
-    let conn = setup_db(db_url, prefork).await;
+    let conn = setup_db(&config.db_url, prefork).await;
 
     if child_num == 0 {
         migrate(&conn).await.expect("Migration failed!");
     }
 
-    let router = setup_router(conn, jwt_secret).attach_doc();
+    let mut router = setup_router(conn, &config.security);
+    if config.security.docs_enabled {
+        router = router.attach_doc();
+    }
+    let router = with_middleware(router, &config.security);
 
     let listener = tokio::net::TcpListener::from_std(listener).expect("bind to port");
-    axum::serve(listener, router).await.expect("start server");
+    // the rate limiter needs the client address
+    let service = router.into_make_service_with_connect_info::<SocketAddr>();
+    axum::serve(listener, service).await.expect("start server");
 }
 
 #[cfg(feature = "prefork")]
-fn run_prefork(db_url: &str, jwt_secret: &str, listener: std::net::TcpListener) {
-    let db_url: &'static str = Box::leak(db_url.to_owned().into_boxed_str());
-    let jwt_secret: &'static str = Box::leak(jwt_secret.to_owned().into_boxed_str());
-    create_dev_db(db_url);
-
+fn run_prefork(config: &'static Config, listener: std::net::TcpListener) {
     let num_of_cores = std::thread::available_parallelism().unwrap().get() as u32;
     let is_parent = prefork::Prefork::from_resource(listener)
         .with_num_processes(num_of_cores)
-        .with_tokio(move |child_num, listener| {
-            worker(child_num, db_url, jwt_secret, true, listener)
-        })
+        .with_tokio(move |child_num, listener| worker(child_num, config, true, listener))
         .fork()
         .expect("prefork failed");
 
@@ -43,15 +44,14 @@ fn run_prefork(db_url: &str, jwt_secret: &str, listener: std::net::TcpListener) 
     }
 }
 
-fn run_non_prefork(db_url: &str, jwt_secret: &str, listener: std::net::TcpListener) {
-    create_dev_db(db_url);
-
+fn run_non_prefork(config: &'static Config, listener: std::net::TcpListener) {
     let rt = tokio::runtime::Runtime::new().unwrap();
-    rt.block_on(worker(0, db_url, jwt_secret, false, listener));
+    rt.block_on(worker(0, config, false, listener));
 }
 
 pub fn run() {
-    let config = setup_config();
+    // lives as long as the process
+    let config: &'static Config = Box::leak(Box::new(setup_config()));
 
     let listener = std::net::TcpListener::bind(config.get_server_url()).expect("bind to port");
     listener.set_nonblocking(true).expect("non blocking failed");
@@ -59,9 +59,9 @@ pub fn run() {
 
     #[cfg(feature = "prefork")]
     if config.prefork {
-        run_prefork(&config.db_url, &config.jwt_secret, listener);
+        run_prefork(config, listener);
         return;
     }
 
-    run_non_prefork(&config.db_url, &config.jwt_secret, listener);
+    run_non_prefork(config, listener);
 }

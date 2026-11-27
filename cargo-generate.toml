@@ -3,50 +3,28 @@ cargo_generate_version = ">=0.23.0"
 # files that belong to the template repository, not to generated projects
 ignore = [".github", "TEMPLATE.md"]
 
-[placeholders.database]
-type = "string"
-prompt = "Database"
-choices = ["sqlite", "postgres", "mysql"]
-default = "sqlite"
-
-# Connection settings, asked only for server databases. The password is never a
-# placeholder: scripts/new-env asks for it and writes it to the ignored .env.
-[conditional.'database != "sqlite"'.placeholders.db_host]
+# PostgreSQL connection settings. The password is never a placeholder:
+# scripts/new-env asks for it and writes it to the ignored .env.
+[placeholders.db_host]
 type = "string"
 prompt = "Database host"
 default = "localhost"
 regex = "^[A-Za-z0-9_.-]+$"
 
-[conditional.'database != "sqlite"'.placeholders.db_name]
-type = "string"
-prompt = "Database name (empty = project name)"
-default = ""
-regex = "^[A-Za-z0-9_]*$"
-
-[conditional.'database == "postgres"'.placeholders.db_port]
+[placeholders.db_port]
 type = "string"
 prompt = "Database port"
 default = "5432"
 regex = "^[0-9]{1,5}$"
 
-[conditional.'database == "postgres"'.placeholders.db_user]
+[placeholders.db_user]
 type = "string"
 prompt = "Database user"
 default = "postgres"
 regex = "^[A-Za-z0-9_.-]+$"
 
-[conditional.'database == "mysql"'.placeholders.db_port]
+[placeholders.db_name]
 type = "string"
-prompt = "Database port"
-default = "3306"
-regex = "^[0-9]{1,5}$"
-
-[conditional.'database == "mysql"'.placeholders.db_user]
-type = "string"
-prompt = "Database user"
-default = "root"
-regex = "^[A-Za-z0-9_.-]+$"
-
-# the Citus scripts only make sense for PostgreSQL
-[conditional.'database != "postgres"']
-ignore = ["deploy"]
+prompt = "Database name (empty = project name)"
+default = ""
+regex = "^[A-Za-z0-9_]*$"

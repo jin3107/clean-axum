@@ -1,4 +1,4 @@
-use api::{setup_db, setup_router};
+use api::{setup_db, setup_router, with_middleware, SecurityConfig};
 use doc::ApiDoc;
 use utils::migrate;
 
@@ -8,7 +8,11 @@ pub async fn run(db_url: &str) -> shuttle_axum::ShuttleAxum {
     let conn = setup_db(&db_url, false).await;
     migrate(&conn).await.expect("Migration failed!");
 
-    let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET is not set");
-    let router = setup_router(conn, &jwt_secret).attach_doc();
-    Ok(router.into())
+    // Shuttle serves the router itself, so all clients share one rate limit
+    let security = SecurityConfig::from_env();
+    let mut router = setup_router(conn, &security);
+    if security.docs_enabled {
+        router = router.attach_doc();
+    }
+    Ok(with_middleware(router, &security).into())
 }

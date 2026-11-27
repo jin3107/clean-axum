@@ -15,9 +15,8 @@ cargo install cargo-generate --locked
 cargo generate --git https://github.com/jin3107/clean-axum.git --branch template --name my-app
 ```
 
-You are asked for the database (`sqlite`, `postgres` or `mysql`) and, for a server
-database, its host, port, user and name. Answer on the command line to skip a
-question, for example `-d database=postgres -d db_port=5433`. The password is
+You are asked for the PostgreSQL host, port, user and database name. Answer on the
+command line to skip a question, for example `-d db_port=5433`. The password is
 asked later by `scripts/new-env`.
 
 ## Short alias
@@ -40,8 +39,7 @@ cargo generate rust-api --name my-app
 
 | Placeholder | Used in |
 |---|---|
-| `project-name` | package name, README |
+| `project-name` | package name, README, default token issuer and audience |
 | `crate_name` | log filter, default database name |
-| `db_host`, `db_port`, `db_user`, `db_name` | `.env.example`, README, Citus script; `postgres` and `mysql` only |
-| `database` | `.env.example`, README, whether `deploy/` is included |
+| `db_host`, `db_port`, `db_user`, `db_name` | `.env.example`, README, Citus script |
 | `authors` | `Cargo.toml` |
