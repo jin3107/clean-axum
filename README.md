@@ -26,6 +26,8 @@ password:
 
 On Linux or macOS use `sh scripts/new-env.sh`.
 
+Run it before the first commit: it also names the new repository's branch `main`.
+
 Start the API. The first build takes several minutes:
 
 ```bash

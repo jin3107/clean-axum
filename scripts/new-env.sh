@@ -4,6 +4,16 @@
 # DB_PASSWORD environment variable instead of answering the prompt.
 set -eu
 cd "$(dirname "$0")/.."
+
+# cargo generate names the first branch after the template branch. Rename it only
+# in this folder's own repository, and only while it has no commit.
+if [ -d .git ] && command -v git >/dev/null 2>&1 &&
+    [ "$(git symbolic-ref --quiet --short HEAD)" = template ] &&
+    ! git rev-parse --quiet --verify HEAD >/dev/null; then
+    git symbolic-ref HEAD refs/heads/main
+    echo "Named the first branch main"
+fi
+
 [ ! -e .env ] || { echo ".env already exists, nothing changed" >&2; exit 1; }
 
 secret=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')

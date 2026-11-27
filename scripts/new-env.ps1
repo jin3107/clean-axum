@@ -3,6 +3,18 @@
 # DB_PASSWORD environment variable instead of answering the prompt.
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
+
+# cargo generate names the first branch after the template branch. Rename it only
+# in this folder's own repository, and only while it has no commit.
+if ((Test-Path (Join-Path $root '.git')) -and (Get-Command git -ErrorAction SilentlyContinue)) {
+    $branch = git -C $root symbolic-ref --quiet --short HEAD
+    $null = git -C $root rev-parse --quiet --verify HEAD
+    if ($branch -eq 'template' -and $LASTEXITCODE -ne 0) {
+        git -C $root symbolic-ref HEAD refs/heads/main
+        Write-Host 'Named the first branch main'
+    }
+}
+
 $target = Join-Path $root '.env'
 if (Test-Path $target) { throw '.env already exists, nothing changed' }
 

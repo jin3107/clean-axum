@@ -20,6 +20,9 @@ command line to skip a question, for example
 `-d roles=doctor,receptionist -d db_port=5433`. The password is
 asked later by `scripts/new-env`.
 
+`cargo generate` starts a Git repository whose branch carries the name of this
+branch. `scripts/new-env` renames it to `main` while it has no commit.
+
 ## Short alias
 
 Add to `cargo-generate.toml` in your `CARGO_HOME` folder:
