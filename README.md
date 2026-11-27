@@ -68,11 +68,6 @@ plus a line in `distribute.sql`.
 | `doc` | OpenAPI document |
 | `utils` | database and test helpers |
 
-## Not included
-
-Refresh tokens, token revocation, rate limiting and CORS. Tenant registration is
-open to anyone. Add these before exposing the API to real users.
-
 ## Credits
 
 Generated from [jin3107/clean-axum](https://github.com/jin3107/clean-axum), a fork
