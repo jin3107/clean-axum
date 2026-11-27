@@ -26,3 +26,9 @@ pub struct LoginParams {
     #[validate(length(min = 1, max = 128))]
     pub password: String,
 }
+
+#[derive(Deserialize, Validate, ToSchema)]
+pub struct RefreshParams {
+    #[validate(length(min = 1, max = 200))]
+    pub refresh_token: String,
+}

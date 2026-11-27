@@ -11,7 +11,8 @@ use models::domains::role::Role;
 
 use crate::error::AuthError;
 
-pub const TOKEN_TTL_SECS: u64 = 60 * 60;
+// short, because an access token cannot be revoked
+pub const TOKEN_TTL_SECS: u64 = 15 * 60;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
