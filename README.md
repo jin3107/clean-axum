@@ -40,6 +40,24 @@ Open <http://localhost:5173>. The dev server forwards `/api` to
 `http://127.0.0.1:3000`; change `client/vite.config.ts` if you change `PORT`.
 `npm run lint` and `npm run build` check the client.
 
+## Docker
+
+`scripts/new-env` also creates `.env.docker` with random secrets. Then:
+
+```bash
+docker compose --env-file .env.docker up -d --build
+```
+
+| Address | Content |
+|---|---|
+| <http://localhost:8080> | web client; `/api` is forwarded to the API |
+| <http://localhost:8081/docs/> | API docs, with `APP_ENV=development` |
+
+Compose runs its own PostgreSQL, kept in the `pgdata` volume. Both ports listen on
+this machine only. `docker compose --env-file .env.docker down` stops the stack;
+add `-v` to delete its data as well. With Docker inside WSL, run these commands
+in the Ubuntu shell.
+
 ## Sessions
 
 `POST /auth/register` creates a tenant and its admin. It and `POST /auth/login`

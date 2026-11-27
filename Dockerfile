@@ -5,8 +5,8 @@ COPY . .
 # the cache mounts keep downloaded crates and compiled output between builds
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/src/target \
-    cargo build --release --locked --bin clean-axum \
-    && cp target/release/clean-axum /usr/local/bin/server
+    cargo build --release --locked --bin {{project-name}} \
+    && cp target/release/{{project-name}} /usr/local/bin/server
 
 FROM debian:bookworm-slim
 RUN useradd --system --uid 10001 app

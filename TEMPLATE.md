@@ -43,8 +43,8 @@ a placeholder there, remove the folder from `exclude` in `cargo-generate.toml`.
 
 | Placeholder | Used in |
 |---|---|
-| `project-name` | package names, README, page title, default token issuer and audience |
-| `crate_name` | log filter, default database name |
+| `project-name` | package names, README, page title, default token issuer and audience, Docker binary and Compose name |
+| `crate_name` | log filter, default database name (also in Compose) |
 | `db_host`, `db_port`, `db_user`, `db_name` | `.env.example`, README, Citus script |
 | `roles` | `models/src/domains/role.rs`, README |
 | `authors` | `Cargo.toml` |

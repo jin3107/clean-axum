@@ -35,3 +35,11 @@ umask 077
 sed -e "s/^JWT_SECRET=.*/JWT_SECRET=$secret/" \
     -e "s|:__DB_PASSWORD__@|:$encoded@|" .env.example > .env
 echo "Created .env"
+
+# Docker Compose has its own database, so it gets its own random secrets
+if [ ! -e .env.docker ]; then
+    random() { head -c "$1" /dev/urandom | od -An -tx1 | tr -d ' \n'; }
+    sed -e "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(random 16)/" \
+        -e "s/^JWT_SECRET=.*/JWT_SECRET=$(random 32)/" .env.docker.example > .env.docker
+    echo "Created .env.docker"
+fi
